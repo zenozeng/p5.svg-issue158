@@ -1,8 +1,8 @@
 /*!!
- *  p5.svg v0.5.1
+ *  p5.svg v0.5.2
  *  SVG Runtime for p5.js.
  *
- *  Copyright (C) 2015 Zeno Zeng
+ *  Copyright (C) 2015-2016 Zeno Zeng
  *  Licensed under the LGPL license.
  */
 (function (root, factory) {
@@ -20,9 +20,6 @@
 })(this, function (p5) {
 
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-require('../src/index.js')(p5);
-
-},{"../src/index.js":8}],2:[function(require,module,exports){
 /*!!
  *  Canvas 2 Svg v1.0.9
  *  A low level canvas to SVG converter. Uses a mock canvas context to build an SVG document.
@@ -1131,7 +1128,7 @@ require('../src/index.js')(p5);
 
 }());
 
-},{}],3:[function(require,module,exports){
+},{}],2:[function(require,module,exports){
 var C2S = require('./canvas2svg');
 
 var Context = function(width, height, options) {
@@ -1345,7 +1342,7 @@ Context.prototype.getSerializedSvg = null;
 
 module.exports = Context;
 
-},{"./canvas2svg":2}],4:[function(require,module,exports){
+},{"./canvas2svg":1}],3:[function(require,module,exports){
 var Context = require('./context');
 
 function SVGCanvas(options) {
@@ -1472,14 +1469,14 @@ SVGCanvas.prototype.getElement = function() {
 
 module.exports = SVGCanvas;
 
-},{"./context":3}],5:[function(require,module,exports){
+},{"./context":2}],4:[function(require,module,exports){
 var constants = {
     SVG: 'svg'
 };
 
 module.exports = constants;
 
-},{}],6:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 module.exports = function(p5) {
     /**
      * Returns an Array of SVGElements of current SVG Graphics matching given selector
@@ -1490,7 +1487,7 @@ module.exports = function(p5) {
      * @returns {SVGElement[]}
      */
     p5.prototype.querySVG = function(selector) {
-        var svg = this._graphics && this._graphics.svg;
+        var svg = this._renderer && this._renderer.svg;
         if (!svg) {
             return null;
         }
@@ -1695,7 +1692,7 @@ module.exports = function(p5) {
     p5.SVGElement = SVGElement;
 };
 
-},{}],7:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 // SVG Filter
 
 module.exports = function(p5) {
@@ -1727,12 +1724,12 @@ module.exports = function(p5) {
     };
 
     p5.prototype.filter = function(operation, value) {
-        var svg = this._graphics.svg;
+        var svg = this._renderer.svg;
         if (svg) {
             // move nodes to a new <g>
             var nodes = svg.children || svg.childNodes; // childNodes is for IE
             var g = p5.SVGElement.create('g');
-            this._graphics._setGCFlag(g.elt);
+            this._renderer._setGCFlag(g.elt);
             svg.appendChild(g.elt);
             // convert nodeList to array and use forEach
             // instead of using for loop,
@@ -1749,16 +1746,16 @@ module.exports = function(p5) {
 
             // create new <g> so that new element won't be influenced by the filter
             g = p5.SVGElement.create('g');
-            this._graphics._setGCFlag(g.elt);
-            this._graphics.svg.appendChild(g.elt);
-            this._graphics.drawingContext.__currentElement = g.elt;
+            this._renderer._setGCFlag(g.elt);
+            this._renderer.svg.appendChild(g.elt);
+            this._renderer.drawingContext.__currentElement = g.elt;
         } else {
             _filter.apply(this, arguments);
         }
     };
 };
 
-},{"./p5.SVGFilters":11}],8:[function(require,module,exports){
+},{"./p5.SVGFilters":10}],7:[function(require,module,exports){
 module.exports = function(p5) {
     /**
      * @namespace p5
@@ -1768,7 +1765,6 @@ module.exports = function(p5) {
     require('./io')(p5);
     require('./element')(p5);
     require('./filters')(p5);
-    require('./polyfill')();
 
     // attach constants to p5 instance
     var constants = require('./constants');
@@ -1777,7 +1773,7 @@ module.exports = function(p5) {
     });
 };
 
-},{"./constants":5,"./element":6,"./filters":7,"./io":9,"./p5.RendererSVG":10,"./polyfill":12,"./rendering":13}],9:[function(require,module,exports){
+},{"./constants":4,"./element":5,"./filters":6,"./io":8,"./p5.RendererSVG":9,"./rendering":11}],8:[function(require,module,exports){
 module.exports = function(p5) {
     /**
      * Convert SVG Element to jpeg / png data url
@@ -1836,7 +1832,7 @@ module.exports = function(p5) {
             throw new Error('Fail to getFrame, invalid extension: ' + ext + ', please use png | jpeg | jpg | svg.');
         }
 
-        var svg = options.svg || this._graphics.svg;
+        var svg = options.svg || this._renderer.svg;
         svg2img(svg, mine, function(err, dataURL) {
             var downloadMime = 'image/octet-stream';
             dataURL = dataURL.replace(mine, downloadMime);
@@ -1868,7 +1864,7 @@ module.exports = function(p5) {
         var svg;
 
         if (args[0] instanceof p5.Graphics) {
-            svg = args[0]._graphics.svg;
+            svg = args[0]._renderer.svg;
             args.shift();
         }
 
@@ -1911,7 +1907,7 @@ module.exports = function(p5) {
     p5.prototype.saveFrames = function(filename, extension, duration, fps, callback) {
         var args = arguments;
 
-        if (!this._graphics.svg) {
+        if (!this._renderer.svg) {
             _saveFrames.apply(this, args);
             return;
         }
@@ -1995,7 +1991,7 @@ module.exports = function(p5) {
             args.shift();
         }
 
-        svg = svg || (this._graphics && this._graphics.svg);
+        svg = svg || (this._renderer && this._renderer.svg);
 
         var filename = args[0];
         var supportedExtensions = ['jpeg', 'png', 'jpg', 'svg', ''];
@@ -2068,11 +2064,11 @@ module.exports = function(p5) {
     p5.prototype._preloadMethods.loadSVG = p5.prototype;
 
     p5.prototype.getDataURL = function() {
-        return this._graphics.elt.toDataURL('image/svg+xml');
+        return this._renderer.elt.toDataURL('image/svg+xml');
     };
 };
 
-},{}],10:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 var SVGCanvas = require('svgcanvas');
 
 module.exports = function(p5) {
@@ -2119,6 +2115,22 @@ module.exports = function(p5) {
     RendererSVG.prototype._applyDefaults = function() {
         p5.Renderer2D.prototype._applyDefaults.call(this);
         this.drawingContext.lineWidth = 1;
+    };
+
+    RendererSVG.prototype.line = function(x1, y1, x2, y2) {
+        var styleEmpty = 'rgba(0,0,0,0)';
+        console.log('line');
+        var ctx = this.drawingContext;
+        if (!this._doStroke) {
+            return this;
+        } else if(ctx.strokeStyle === styleEmpty){
+            return this;
+        }
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        return this;
     };
 
     RendererSVG.prototype.resize = function(w, h) {
@@ -2208,7 +2220,7 @@ module.exports = function(p5) {
         if (!img) {
             throw new Error('Invalid image: ' + img);
         }
-        var elt = img._graphics && img._graphics.svg; // handle SVG Graphics
+        var elt = img._renderer && img._renderer.svg; // handle SVG Graphics
         elt = elt || (img.elt && img.elt.nodeName && (img.elt.nodeName.toLowerCase() === 'svg') && img.elt); // SVGElement
         elt = elt || (img.nodeName && (img.nodeName.toLowerCase() == 'svg') && img); // <svg>
         if (elt) {
@@ -2227,7 +2239,7 @@ module.exports = function(p5) {
     p5.RendererSVG = RendererSVG;
 };
 
-},{"svgcanvas":4}],11:[function(require,module,exports){
+},{"svgcanvas":3}],10:[function(require,module,exports){
 module.exports = function(p5) {
     var SVGFilters = function() {};
 
@@ -2470,53 +2482,7 @@ module.exports = function(p5) {
     return SVGFilters;
 };
 
-},{}],12:[function(require,module,exports){
-module.exports = function() {
-    // for https://github.com/processing/p5.js/issues/858
-    if (!String.prototype.repeat) {
-        String.prototype.repeat = function(count) {
-            'use strict';
-            if (this == null) {
-                throw new TypeError('can\'t convert ' + this + ' to object');
-            }
-            var str = '' + this;
-            count = +count;
-            if (count != count) {
-                count = 0;
-            }
-            if (count < 0) {
-                throw new RangeError('repeat count must be non-negative');
-            }
-            if (count == Infinity) {
-                throw new RangeError('repeat count must be less than infinity');
-            }
-            count = Math.floor(count);
-            if (str.length == 0 || count == 0) {
-                return '';
-            }
-            // Ensuring count is a 31-bit integer allows us to heavily optimize the
-            // main part. But anyway, most current (August 2014) browsers can't handle
-            // strings 1 << 28 chars or longer, so:
-            if (str.length * count >= 1 << 28) {
-                throw new RangeError('repeat count must not overflow maximum string size');
-            }
-            var rpt = '';
-            for (;;) {
-                if ((count & 1) == 1) {
-                    rpt += str;
-                }
-                count >>>= 1;
-                if (count == 0) {
-                    break;
-                }
-                str += str;
-            }
-            return rpt;
-        };
-    }
-};
-
-},{}],13:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 var constants = require('./constants');
 var SVGCanvas = require('svgcanvas');
 
@@ -2528,13 +2494,13 @@ module.exports = function(p5) {
         _graphics.apply(this, args);
         if (renderer === constants.SVG) {
             // replace <canvas> with <svg>
-            var c = this._graphics.elt;
-            this._graphics = new p5.RendererSVG(c, pInst, false); // replace renderer
-            c = this._graphics.elt;
+            var c = this._renderer.elt;
+            this._renderer = new p5.RendererSVG(c, pInst, false); // replace renderer
+            c = this._renderer.elt;
             this.elt = c; // replace this.elt
             // do default again
-            this._graphics.resize(w, h);
-            this._graphics._applyDefaults();
+            this._renderer.resize(w, h);
+            this._renderer._applyDefaults();
         }
         return this;
     };
@@ -2568,12 +2534,12 @@ module.exports = function(p5) {
      *
      */
     p5.prototype.loadGraphics = function(graphics, successCallback, failureCallback) {
-        if (graphics._graphics.svg) {
-            var svg = graphics._graphics.svg;
-            var url = SVGCanvas.prototype.toDataURL.call(graphics._graphics.elt, 'image/svg+xml');
+        if (graphics._renderer.svg) {
+            var svg = graphics._renderer.svg;
+            var url = SVGCanvas.prototype.toDataURL.call(graphics._renderer.elt, 'image/svg+xml');
             var pg = this.createGraphics(graphics.width, graphics.height);
             // also copy SVG, so we can keep vector SVG when image(pg) in SVG runtime
-            pg._graphics.svg = svg.cloneNode(true);
+            pg._renderer.svg = svg.cloneNode(true);
             pg.loadImage(url, function(img) {
                 pg.image(img);
                 successCallback(pg);
@@ -2602,14 +2568,17 @@ module.exports = function(p5) {
         var graphics = _createCanvas.apply(this, arguments);
         if (renderer === constants.SVG) {
             var c = graphics.elt;
-            this._setProperty('_graphics', new p5.RendererSVG(c, this, true));
+            this._setProperty('_renderer', new p5.RendererSVG(c, this, true));
             this._isdefaultGraphics = true;
-            this._graphics.resize(w, h);
-            this._graphics._applyDefaults();
+            this._renderer.resize(w, h);
+            this._renderer._applyDefaults();
         }
-        return this._graphics;
+        return this._renderer;
     };
 };
 
-},{"./constants":5,"svgcanvas":4}]},{},[1]);
+},{"./constants":4,"svgcanvas":3}],12:[function(require,module,exports){
+require('../src/index.js')(p5);
+
+},{"../src/index.js":7}]},{},[12]);
 });
